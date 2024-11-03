@@ -1,12 +1,12 @@
 {
-  "name": "effector-openapi-preset",
+  "name": "@mere1y/effector-openapi-preset",
   "version": "0.3.2",
   "description": "Generate API layer from Swagger by openapi",
   "main": "index.js",
   "scripts": {
     "test": "jest",
     "prepublishOnly": "yarn test",
-    "example": "openapi --config ./example/.openapi.config.js && yarn prettier --write ./example && yarn eslint --fix ./example"
+    "example": "openapi --config examples/accesso-app/.openapi.config.js && yarn prettier --write examples && yarn eslint --fix examples"
   },
   "publishConfig": {
     "access": "public"

@@ -61,17 +61,23 @@ function anyOf(variants) {
   return oneOf(variants);
 }
 
-function allOf(variants) {
-  return t.callExpression(
+function allOf(variants, nullable = false) {
+  let ast = t.callExpression(
     t.memberExpression(t.identifier('typed'), t.identifier('intersection')),
     variants.map((schema) => createContract(schema)),
   );
+
+  if (nullable) {
+    ast = t.memberExpression(ast, t.identifier('maybe'));
+  }
+
+  return ast;
 }
 
 function createContract(schema, required = true) {
   if (schema.oneOf) return oneOf(schema.oneOf);
   if (schema.anyOf) return anyOf(schema.anyOf);
-  if (schema.allOf) return allOf(schema.allOf);
+  if (schema.allOf) return allOf(schema.allOf, schema.nullable);
 
   const creator = create[schema.type || 'object'];
   if (!creator) {
