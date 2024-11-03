@@ -67,6 +67,25 @@ function parseByStatus<
   return { status, answer } as Result[Exclude<keyof Result, ErrorCodes>];
 }
 
+function convertBodyToUrlSearchParams(body: Record<string, any>): URLSearchParams {
+  function flattenObject(obj: any, parent: string = '', res: Record<string, string> = {}): Record<string, string> {
+    for (let key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const propName = parent ? \`\${parent}[\${key}]\` : key;
+        if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+          flattenObject(obj[key], propName, res);
+        } else {
+          res[propName] = String(obj[key]);
+        }
+      }
+    }
+    return res;
+  }
+
+  const flatBody = flattenObject(body);
+  return new URLSearchParams(flatBody);
+}
+
 //#endregion prebuilt code
 `.trim();
 

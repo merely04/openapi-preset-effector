@@ -85,6 +85,7 @@ function createParamsTypes(name, { requestBody, parameters }) {
   if (requestBody) {
     const schema =
       requestBody.content['application/json']?.schema ||
+      requestBody.content['application/x-www-form-urlencoded']?.schema ||
       requestBody.content['multipart/form-data'].schema;
 
     const member = t.tsPropertySignature(
@@ -287,9 +288,31 @@ function createRequestParams(
     // Path params used only in path literal
     ...Object.keys(destructuring)
       .filter((param) => param !== 'path')
-      .map((name) =>
-        t.objectProperty(t.identifier(name), t.identifier(name), false, true),
-      ),
+      .map((name) => {
+        if (
+          name === 'body' &&
+          requestBody.content['application/x-www-form-urlencoded'] !== undefined
+        ) {
+          const urlEncodedBody = t.callExpression(
+            t.identifier('convertBodyToUrlSearchParams'),
+            [t.identifier(name)],
+          );
+
+          return t.objectProperty(
+            t.identifier(name),
+            urlEncodedBody,
+            false,
+            false,
+          );
+        }
+
+        return t.objectProperty(
+          t.identifier(name),
+          t.identifier(name),
+          false,
+          true,
+        );
+      }),
   ]);
 }
 
