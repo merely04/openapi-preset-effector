@@ -63,10 +63,16 @@ function oneOf(variants) {
   return t.tsUnionType(variants.map((variant) => createInterface(variant)));
 }
 
-function allOf(variants) {
-  return t.tsIntersectionType(
+function allOf(variants, nullable = false) {
+  let ast = t.tsIntersectionType(
     variants.map((variant) => createInterface(variant)),
   );
+
+  if (nullable) {
+    ast = t.tsUnionType([ast, t.tsNullKeyword()]);
+  }
+
+  return ast;
 }
 
 function anyOf(variants) {
@@ -82,11 +88,10 @@ function anyOf(variants) {
 
 function createInterface(schema, _required = true) {
   if (schema.oneOf) return oneOf(schema.oneOf);
-  if (schema.allOf) return allOf(schema.allOf);
   if (schema.anyOf) return anyOf(schema.anyOf);
+  if (schema.allOf) return allOf(schema.allOf, schema.nullable);
 
   const creator = create[schema.type || 'object'];
-
   if (!creator) {
     console.info(schema);
     throw new Error(`type "${schema.type}" is not supported by interfaces`);
