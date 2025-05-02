@@ -54,9 +54,11 @@ function createDoneContracts(name, responses) {
   const contracts = variants.map((code) => {
     const contractName =
       changeCase.camelCase(name) + changeCase.pascalCase(status[code].code);
-    const contract = responses[code].content
-      ? createContract(responses[code].content['application/json'].schema)
-      : createNullContract();
+    const schema =
+      responses[code].schema ||
+      responses[code].content?.['application/json']?.schema ||
+      null;
+    const contract = schema ? createContract(schema) : createNullContract();
     const ast = t.exportNamedDeclaration(
       t.variableDeclaration('const', [
         t.variableDeclarator(t.identifier(contractName), contract),
@@ -111,11 +113,16 @@ function createParamsTypes(name, { requestBody, parameters }) {
   for (const name in dataTypes) {
     const { required, children } = dataTypes[name];
     const schema = t.tsTypeLiteral(
-      children.map(({ name, required, schema, content, description }) => {
+      children.map(({ name, required, schema, content, description, type }) => {
         const property = t.tsPropertySignature(
           createPropertyName(name),
           t.tsTypeAnnotation(
-            createInterface(schema || content['application/json'].schema),
+            createInterface(
+              schema ||
+                content?.['application/json']?.schema || {
+                  type,
+                },
+            ),
           ),
         );
         if (description) addComment(property, description);
@@ -165,9 +172,11 @@ function createFailContracts(name, responses) {
   const contracts = variants.map((code) => {
     const contractName =
       changeCase.camelCase(name) + changeCase.pascalCase(status[code].code);
-    const contract = responses[code].content
-      ? createContract(responses[code].content['application/json'].schema)
-      : createNullContract();
+    const schema =
+      responses[code].schema ||
+      responses[code].content?.['application/json']?.schema ||
+      null;
+    const contract = schema ? createContract(schema) : createNullContract();
     const ast = t.exportNamedDeclaration(
       t.variableDeclaration('const', [
         t.variableDeclarator(t.identifier(contractName), contract),
@@ -291,7 +300,8 @@ function createRequestParams(
       .map((name) => {
         if (
           name === 'body' &&
-          requestBody.content['application/x-www-form-urlencoded'] !== undefined
+          requestBody?.content['application/x-www-form-urlencoded'] !==
+            undefined
         ) {
           const urlEncodedBody = t.callExpression(
             t.identifier('convertBodyToUrlSearchParams'),
